@@ -1,0 +1,11 @@
+rest-client:
+  services:
+    api-example-1:
+      url: https://api.exemplo1.com
+      connection-time-out: 3000
+      read-time-out: 5000
+
+    api-example-2:
+      url: https://api.exemplo2.com
+      connection-time-out: 4000
+      read-time-out: 7000
