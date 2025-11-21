@@ -1,0 +1,96 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-01-01T00:00:00.000Z",
+  "resources": [
+    {
+      "_id": "fld_rest_client",
+      "_type": "request_group",
+      "name": "Rest Client"
+    },
+
+    {
+      "_id": "fld_github",
+      "_type": "request_group",
+      "parentId": "fld_rest_client",
+      "name": "Github"
+    },
+
+    {
+      "_id": "req_github_get_user",
+      "_type": "request",
+      "parentId": "fld_github",
+      "name": "Get User",
+      "method": "GET",
+      "url": "http://localhost:8080/api/github/user/{{username}}",
+      "body": {},
+      "headers": [],
+      "parameters": []
+    },
+
+    {
+      "_id": "req_github_list_repos",
+      "_type": "request",
+      "parentId": "fld_github",
+      "name": "List User Repos",
+      "method": "GET",
+      "url": "http://localhost:8080/api/github/repos/{{username}}",
+      "body": {},
+      "headers": [],
+      "parameters": []
+    },
+
+    {
+      "_id": "fld_stripe",
+      "_type": "request_group",
+      "parentId": "fld_rest_client",
+      "name": "Stripe"
+    },
+
+    {
+      "_id": "req_stripe_create_payment",
+      "_type": "request",
+      "parentId": "fld_stripe",
+      "name": "Create Payment Intent",
+      "method": "POST",
+      "url": "http://localhost:8080/api/stripe/payment-intent?amount=1000&currency=usd",
+      "body": {
+        "mimeType": "application/x-www-form-urlencoded",
+        "text": ""
+      },
+      "headers": [],
+      "parameters": []
+    },
+
+    {
+      "_id": "req_stripe_get_payment",
+      "_type": "request",
+      "parentId": "fld_stripe",
+      "name": "Get Payment Intent",
+      "method": "GET",
+      "url": "http://localhost:8080/api/stripe/payment-intent/{{payment_id}}",
+      "body": {},
+      "headers": [],
+      "parameters": []
+    },
+
+    {
+      "_id": "fld_viacep",
+      "_type": "request_group",
+      "parentId": "fld_rest_client",
+      "name": "ViaCep"
+    },
+
+    {
+      "_id": "req_viacep_find_cep",
+      "_type": "request",
+      "parentId": "fld_viacep",
+      "name": "Find CEP",
+      "method": "GET",
+      "url": "http://localhost:8080/api/viacep/{{cep}}",
+      "body": {},
+      "headers": [],
+      "parameters": []
+    }
+  ]
+}
