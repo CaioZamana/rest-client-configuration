@@ -4,6 +4,8 @@ import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClient.RequestHeadersSpec;
@@ -14,53 +16,44 @@ import java.util.function.Consumer;
 
 @Configuration
 public class RestClientConfig {
-
     @Bean
-    public RestClient apiExample1Client(
+    public RestClient stripeClient(
             RestClient.Builder builder,
-            @Value("${rest-client.services.api-example-1.url}") String url,
-            @Value("${rest-client.services.api-example-1.connection-time-out}") int connectTimeout,
-            @Value("${rest-client.services.api-example-1.read-time-out}") int readTimeout
+            @Value("${rest-client.services.stripe.url}") String url,
+            @Value("${rest-client.services.stripe.connection-time-out}") int connectTimeout,
+            @Value("${rest-client.services.stripe.read-time-out}") int readTimeout
     ) {
-
-        // Headers globais usados para identificar o cliente na API destino
-        // Isso permite rastreamento, auditoria e debugging entre serviços.
         Consumer<RequestHeadersSpec<?>> defaultHeaders = req -> {
-            req.header("X-Client", "ApiExample1");
-            req.header("Accept", "application/json");
-            req.header("X-Version", "1.0.0");
-        };
-
-        return buildClient(builder, url, connectTimeout, readTimeout, defaultHeaders);
-    }
-
-
-    @Bean
-    public RestClient apiExample2Client(
-            RestClient.Builder builder,
-            @Value("${rest-client.services.api-example-2.url}") String url,
-            @Value("${rest-client.services.api-example-2.connection-time-out}") int connectTimeout,
-            @Value("${rest-client.services.api-example-2.read-time-out}") int readTimeout
-    ) {
-
-        // Cada client pode possuir seus headers específicos. Isso evita
-        // conflitos entre serviços diferentes e facilita a observabilidade.
-        Consumer<RequestHeadersSpec<?>> defaultHeaders = req -> {
-            req.header("X-Client", "ApiExample2");
-            req.header("Accept", "application/json");
-            req.header("X-Version", "2.0.0");
+            req.header("Authorization", "Bearer sk_test_123456789");
+            req.header("Stripe-Version", "2023-10-16");
         };
 
         return buildClient(builder, url, connectTimeout, readTimeout, defaultHeaders);
     }
 
     @Bean
-    public RestClient apiExample3Client(
+    public RestClient githubClient(
             RestClient.Builder builder,
-            @Value("${rest-client.services.api-example-3.url}") String url,
-            @Value("${rest-client.services.api-example-3.connection-time-out}") int connectTimeout,
-            @Value("${rest-client.services.api-example-3.read-time-out}") int readTimeout
+            @Value("${rest-client.services.github.url}") String url,
+            @Value("${rest-client.services.github.connection-time-out}") int connectTimeout,
+            @Value("${rest-client.services.github.read-time-out}") int readTimeout
     ) {
+        Consumer<RequestHeadersSpec<?>> defaultHeaders = req -> {
+            req.header("Accept", "application/vnd.github+json");
+            req.header("X-GitHub-Api-Version", "2022-11-28");
+        };
+
+        return buildClient(builder, url, connectTimeout, readTimeout, defaultHeaders);
+    }
+
+    @Bean
+    public RestClient viaCepClient(
+            RestClient.Builder builder,
+            @Value("${rest-client.services.viacep.url}") String url,
+            @Value("${rest-client.services.viacep.connection-time-out}") int connectTimeout,
+            @Value("${rest-client.services.viacep.read-time-out}") int readTimeout
+    ) {
+        // Não precisa de headers
         return buildClient(builder, url, connectTimeout, readTimeout, null);
     }
 
@@ -78,27 +71,24 @@ public class RestClientConfig {
             @Nullable Consumer<RequestHeadersSpec<?>> defaultHeaders
     ) {
 
-        // Timeout de conexão impede que a aplicação fique bloqueada
-        // quando o host remoto está indisponível ou lento para responder o handshake TCP.
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(connectTimeout))
                 .build();
 
-        // Timeout de leitura evita travamento da thread em casos onde
-        // a API destino aceita a conexão mas nunca envia resposta.
-        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(Duration.ofMillis(readTimeout));
+        // Timeout de leitura
+        JdkClientHttpRequestFactory jdkFactory = new JdkClientHttpRequestFactory(httpClient);
+        jdkFactory.setReadTimeout(Duration.ofMillis(readTimeout));
 
-//Old
-//        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-//        factory.setConnectTimeout(connectTimeout);
-//        factory.setReadTimeout(readTimeout);
+        // 🔥 Wrapper que permite ler o body mais de uma vez
+        ClientHttpRequestFactory bufferingFactory =
+                new BufferingClientHttpRequestFactory(jdkFactory);
 
         return builder
                 .clone()
-                .baseUrl(url)                 // Força o client a sempre apontar para a URL do serviço destino
-                .requestFactory(factory)      // Garante controle total de timeouts e comportamento baixo nível
-                .defaultRequest(defaultHeaders) // Injeta headers padrão em todas as requisições
+                .baseUrl(url)
+                .requestFactory(bufferingFactory)   // <- funciona 100% com interceptores
+                .defaultRequest(defaultHeaders)
+                .requestInterceptor(new ErrorLoggingInterceptor())
                 .build();
     }
 }
