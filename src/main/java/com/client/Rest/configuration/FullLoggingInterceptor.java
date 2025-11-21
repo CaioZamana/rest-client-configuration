@@ -25,7 +25,7 @@ public class FullLoggingInterceptor implements ClientHttpRequestInterceptor {
 
         long start = System.currentTimeMillis();
 
-        logRequest(request, body);
+        logRequest(request);
 
         ClientHttpResponse response = execution.execute(request, body);
 
@@ -36,19 +36,17 @@ public class FullLoggingInterceptor implements ClientHttpRequestInterceptor {
         return response; // não altera fluxo, só observa
     }
 
-    private void logRequest(HttpRequest request, byte[] body) {
+    private void logRequest(HttpRequest request) {
         log.info("""
-                
-                === OUTGOING REQUEST ===
-                method={}
-                uri={}
-                headers={}
-                body={}
-                """,
+                        
+                        === OUTGOING REQUEST ===
+                        method={}
+                        uri={}
+                        headers={}
+                        """,
                 request.getMethod(),
                 request.getURI(),
-                request.getHeaders(),
-                body.length > 0 ? new String(body, StandardCharsets.UTF_8) : "<empty>"
+                request.getHeaders()
         );
     }
 
@@ -57,15 +55,15 @@ public class FullLoggingInterceptor implements ClientHttpRequestInterceptor {
             String body = readBody(response);
 
             log.info("""
-                    
-                    === INCOMING RESPONSE ===
-                    method={}
-                    uri={}
-                    status={}
-                    headers={}
-                    body={}
-                    latencyMs={}
-                    """,
+                            
+                            === INCOMING RESPONSE ===
+                            method={}
+                            uri={}
+                            status={}
+                            headers={}
+                            body={}
+                            latencyMs={}
+                            """,
                     request.getMethod(),
                     request.getURI(),
                     response.getStatusCode().value(),
