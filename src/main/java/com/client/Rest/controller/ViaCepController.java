@@ -1,4 +1,4 @@
-package com.client.Rest.GithubController;
+package com.client.Rest.controller;
 
 import com.client.Rest.service.ViaCepRestClient;
 import org.springframework.http.ResponseEntity;
