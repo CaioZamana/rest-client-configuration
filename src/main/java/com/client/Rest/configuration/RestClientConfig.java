@@ -75,11 +75,9 @@ public class RestClientConfig {
                 .connectTimeout(Duration.ofMillis(connectTimeout))
                 .build();
 
-        // Timeout de leitura
         JdkClientHttpRequestFactory jdkFactory = new JdkClientHttpRequestFactory(httpClient);
         jdkFactory.setReadTimeout(Duration.ofMillis(readTimeout));
 
-        // 🔥 Wrapper que permite ler o body mais de uma vez
         ClientHttpRequestFactory bufferingFactory =
                 new BufferingClientHttpRequestFactory(jdkFactory);
 
